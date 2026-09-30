@@ -11,8 +11,6 @@ can serialise them into a consistent error envelope:
             "details": <optional>
         }
     }
-
-New domain exceptions introduced in later phases should be added here.
 """
 
 from typing import Any
@@ -37,22 +35,49 @@ class AppException(HTTPException):
         self.details = details
 
 
-# ── Generic Resource ────────────────────────────────────────────────────────
+# ── Generic Resource Exceptions ─────────────────────────────────────────────
 
 class NotFoundException(AppException):
     """Raised when a requested resource does not exist."""
 
-    def __init__(self, resource: str, identifier: Any):
+    def __init__(self, resource: str, identifier: Any, code: str | None = None):
+        error_code = code or f"{resource.upper()}_NOT_FOUND"
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
-            code=f"{resource.upper()}_NOT_FOUND",
+            code=error_code,
             message=f"{resource} with identifier '{identifier}' was not found.",
         )
 
 
-# ── Authentication & Authorization ──────────────────────────────────────────
-# NOTE: These are placeholder exception classes.
-# Full JWT implementation is deferred to the authentication phase.
+class BadRequestException(AppException):
+    def __init__(self, code: str, message: str):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code=code,
+            message=message,
+        )
+
+
+class ConflictException(AppException):
+    def __init__(self, code: str, message: str):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            code=code,
+            message=message,
+        )
+
+
+class ValidationException(AppException):
+    def __init__(self, code: str, message: str, details: Any | None = None):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code=code,
+            message=message,
+            details=details,
+        )
+
+
+# ── Authentication & Authorization Domain Exceptions ────────────────────────
 
 class InvalidCredentialsException(AppException):
     def __init__(self, message: str = "Invalid email or password."):
@@ -102,31 +127,58 @@ class DuplicateUserException(AppException):
         )
 
 
-# ── Business Validation ──────────────────────────────────────────────────────
+# ── Domain-Specific Named Exceptions ────────────────────────────────────────
 
-class ValidationException(AppException):
-    def __init__(self, code: str, message: str, details: Any | None = None):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            code=code,
-            message=message,
-            details=details,
-        )
+class BookingNotFoundException(NotFoundException):
+    def __init__(self, identifier: Any):
+        super().__init__("Booking", identifier, code="BOOKING_NOT_FOUND")
 
 
-class ConflictException(AppException):
-    def __init__(self, code: str, message: str):
-        super().__init__(
-            status_code=status.HTTP_409_CONFLICT,
-            code=code,
-            message=message,
-        )
+class CentreNotFoundException(NotFoundException):
+    def __init__(self, identifier: Any):
+        super().__init__("DiagnosticCentre", identifier, code="DIAGNOSTICCENTRE_NOT_FOUND")
 
 
-class BadRequestException(AppException):
-    def __init__(self, code: str, message: str):
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            code=code,
-            message=message,
-        )
+class TestNotFoundException(NotFoundException):
+    def __init__(self, identifier: Any):
+        super().__init__("DiagnosticTest", identifier, code="DIAGNOSTICTEST_NOT_FOUND")
+
+
+class SlotNotFoundException(NotFoundException):
+    def __init__(self, identifier: Any):
+        super().__init__("AppointmentSlot", identifier, code="APPOINTMENTSLOT_NOT_FOUND")
+
+
+class PaymentNotFoundException(NotFoundException):
+    def __init__(self, identifier: Any):
+        super().__init__("Payment", identifier, code="PAYMENT_NOT_FOUND")
+
+
+class SlotAlreadyBookedException(ConflictException):
+    def __init__(self, message: str = "Appointment slot is already booked."):
+        super().__init__(code="SLOT_ALREADY_BOOKED", message=message)
+
+
+class InvalidStateTransitionException(ConflictException):
+    def __init__(self, message: str = "Invalid state transition for resource."):
+        super().__init__(code="INVALID_STATE_TRANSITION", message=message)
+
+
+class PaymentAmountMismatchException(ValidationException):
+    def __init__(self, message: str = "Provided payment amount does not match booking amount."):
+        super().__init__(code="PAYMENT_AMOUNT_MISMATCH", message=message)
+
+
+class PaymentAlreadyCompletedException(ConflictException):
+    def __init__(self, message: str = "Payment has already been completed for this booking."):
+        super().__init__(code="PAYMENT_ALREADY_COMPLETED", message=message)
+
+
+class BookingAlreadyCancelledException(ConflictException):
+    def __init__(self, message: str = "Booking has already been cancelled."):
+        super().__init__(code="BOOKING_ALREADY_CANCELLED", message=message)
+
+
+class WebhookAlreadyProcessedException(ConflictException):
+    def __init__(self, message: str = "Webhook event has already been processed."):
+        super().__init__(code="WEBHOOK_ALREADY_PROCESSED", message=message)

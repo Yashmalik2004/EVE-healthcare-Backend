@@ -170,6 +170,10 @@ class PaymentService:
         if simulated_status == PaymentStatus.SUCCESS:
             booking_service.transition_status(db, booking, BookingStatus.CONFIRMED)
         else:
+            logger.warning(
+                f"Payment simulated as FAILED: ref={payment_ref}, "
+                f"booking_id={booking.id}, amount={payment_in.amount}"
+            )
             booking_service.transition_status(db, booking, BookingStatus.FAILED)
 
         # Step 9 — Atomic commit
