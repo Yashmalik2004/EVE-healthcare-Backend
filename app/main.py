@@ -24,12 +24,13 @@ Future routes (added in their respective phases):
 """
 
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import auth, health
+from app.api.routes import auth, centres, health, tests
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import logger
@@ -44,6 +45,14 @@ tags_metadata = [
     {
         "name": "Authentication",
         "description": "User registration, login, and profile retrieval via JWT.",
+    },
+    {
+        "name": "Diagnostic Centres",
+        "description": "Diagnostic centre management and centre-specific test catalogue configuration.",
+    },
+    {
+        "name": "Diagnostic Tests",
+        "description": "Diagnostic tests catalogue definition and lookup.",
     },
     # Future phases will extend this list:
     # {"name": "Authentication", ...},
@@ -98,13 +107,13 @@ async def app_exception_handler(request: Request, exc: AppException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle Pydantic/FastAPI validation errors."""
-    errors = exc.errors()
-    first_error = errors[0] if errors else {}
+    raw_errors = exc.errors()
+    first_error = raw_errors[0] if raw_errors else {}
     msg = first_error.get("msg", "Validation error.")
     loc = " -> ".join([str(x) for x in first_error.get("loc", [])])
     if loc:
         msg = f"{loc}: {msg}"
-    logger.warning(f"Validation error on {request.url.path}: {errors}")
+    logger.warning(f"Validation error on {request.url.path}: {raw_errors}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -112,7 +121,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "error": {
                 "code": "VALIDATION_ERROR",
                 "message": msg,
-                "details": errors,
+                "details": jsonable_encoder(raw_errors),
             },
         },
     )
@@ -167,9 +176,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 app.include_router(health.router)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+app.include_router(centres.router, prefix=settings.API_V1_STR)
+app.include_router(tests.router, prefix=settings.API_V1_STR)
 # Future phases will add:
-# app.include_router(centres.router, prefix=settings.API_V1_STR)
-# ...
+# app.include_router(bookings.router, prefix=settings.API_V1_STR)
 
 
 # ── Root overview ─────────────────────────────────────────────────────────────
