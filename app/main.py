@@ -29,7 +29,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import health
+from app.api.routes import auth, health
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import logger
@@ -40,6 +40,10 @@ tags_metadata = [
     {
         "name": "Health",
         "description": "Service health check and database connectivity verification.",
+    },
+    {
+        "name": "Authentication",
+        "description": "User registration, login, and profile retrieval via JWT.",
     },
     # Future phases will extend this list:
     # {"name": "Authentication", ...},
@@ -162,8 +166,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # ── Routers ───────────────────────────────────────────────────────────────────
 
 app.include_router(health.router)
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 # Future phases will add:
-# app.include_router(auth.router, prefix=settings.API_V1_STR)
 # app.include_router(centres.router, prefix=settings.API_V1_STR)
 # ...
 

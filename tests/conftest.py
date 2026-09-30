@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.database import Base, get_db
+import app.models  # noqa: F401 — ensure all models are registered on Base.metadata
 from app.main import app
 
 # ── Test Database ─────────────────────────────────────────────────────────────
