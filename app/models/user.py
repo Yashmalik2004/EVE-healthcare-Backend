@@ -11,12 +11,17 @@ Relationships
 """
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 from app.models.enums import UserRole
+
+if TYPE_CHECKING:
+    from app.models.booking import Booking
+
 
 
 class User(Base):
@@ -51,6 +56,7 @@ class User(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    bookings: Mapped[list["Booking"]] = relationship(  # noqa: F821
+    bookings: Mapped[list["Booking"]] = relationship(
         "Booking", back_populates="user", cascade="all, delete-orphan"
     )
+

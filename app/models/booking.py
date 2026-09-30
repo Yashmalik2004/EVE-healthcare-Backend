@@ -20,12 +20,20 @@ Relationships
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 from app.models.enums import BookingStatus
+
+if TYPE_CHECKING:
+    from app.models.appointment_slot import AppointmentSlot
+    from app.models.centre_test import CentreTest
+    from app.models.payment import Payment
+    from app.models.user import User
+
 
 
 class Booking(Base):
@@ -79,13 +87,14 @@ class Booking(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    user: Mapped["User"] = relationship("User", back_populates="bookings")  # noqa: F821
-    centre_test: Mapped["CentreTest"] = relationship(  # noqa: F821
+    user: Mapped["User"] = relationship("User", back_populates="bookings")
+    centre_test: Mapped["CentreTest"] = relationship(
         "CentreTest", back_populates="bookings"
     )
-    appointment_slot: Mapped["AppointmentSlot"] = relationship(  # noqa: F821
+    appointment_slot: Mapped["AppointmentSlot"] = relationship(
         "AppointmentSlot", back_populates="booking"
     )
-    payments: Mapped[list["Payment"]] = relationship(  # noqa: F821
+    payments: Mapped[list["Payment"]] = relationship(
         "Payment", back_populates="booking", cascade="all, delete-orphan"
     )
+

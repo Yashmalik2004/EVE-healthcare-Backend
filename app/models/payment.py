@@ -15,12 +15,18 @@ Relationships
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 from app.models.enums import PaymentStatus
+
+if TYPE_CHECKING:
+    from app.models.booking import Booking
+    from app.models.webhook_event import PaymentWebhookEvent
+
 
 
 class Payment(Base):
@@ -74,7 +80,8 @@ class Payment(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    booking: Mapped["Booking"] = relationship("Booking", back_populates="payments")  # noqa: F821
-    webhook_events: Mapped[list["PaymentWebhookEvent"]] = relationship(  # noqa: F821
+    booking: Mapped["Booking"] = relationship("Booking", back_populates="payments")
+    webhook_events: Mapped[list["PaymentWebhookEvent"]] = relationship(
         "PaymentWebhookEvent", back_populates="payment", cascade="all, delete-orphan"
     )
+

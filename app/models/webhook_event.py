@@ -13,11 +13,16 @@ Relationships
 """
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+
+if TYPE_CHECKING:
+    from app.models.payment import Payment
+
 
 
 class PaymentWebhookEvent(Base):
@@ -57,6 +62,7 @@ class PaymentWebhookEvent(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    payment: Mapped["Payment | None"] = relationship(  # noqa: F821
+    payment: Mapped["Payment | None"] = relationship(
         "Payment", back_populates="webhook_events"
     )
+

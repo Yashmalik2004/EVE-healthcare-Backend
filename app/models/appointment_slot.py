@@ -11,11 +11,17 @@ Relationships
 """
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+
+if TYPE_CHECKING:
+    from app.models.booking import Booking
+    from app.models.centre import DiagnosticCentre
+
 
 
 class AppointmentSlot(Base):
@@ -55,10 +61,11 @@ class AppointmentSlot(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    centre: Mapped["DiagnosticCentre"] = relationship(  # noqa: F821
+    centre: Mapped["DiagnosticCentre"] = relationship(
         "DiagnosticCentre", back_populates="slots"
     )
     # uselist=False → one-to-one on the "one" side (Booking holds the FK)
-    booking: Mapped["Booking | None"] = relationship(  # noqa: F821
+    booking: Mapped["Booking | None"] = relationship(
         "Booking", back_populates="appointment_slot", uselist=False
     )
+

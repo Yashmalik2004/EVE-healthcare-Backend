@@ -15,11 +15,18 @@ Relationships
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+
+if TYPE_CHECKING:
+    from app.models.booking import Booking
+    from app.models.centre import DiagnosticCentre
+    from app.models.diagnostic_test import DiagnosticTest
+
 
 
 class CentreTest(Base):
@@ -62,12 +69,13 @@ class CentreTest(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    centre: Mapped["DiagnosticCentre"] = relationship(  # noqa: F821
+    centre: Mapped["DiagnosticCentre"] = relationship(
         "DiagnosticCentre", back_populates="centre_tests"
     )
-    test: Mapped["DiagnosticTest"] = relationship(  # noqa: F821
+    test: Mapped["DiagnosticTest"] = relationship(
         "DiagnosticTest", back_populates="centre_tests"
     )
-    bookings: Mapped[list["Booking"]] = relationship(  # noqa: F821
+    bookings: Mapped[list["Booking"]] = relationship(
         "Booking", back_populates="centre_test"
     )
+

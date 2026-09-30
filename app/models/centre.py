@@ -11,11 +11,17 @@ Relationships
 """
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+
+if TYPE_CHECKING:
+    from app.models.appointment_slot import AppointmentSlot
+    from app.models.centre_test import CentreTest
+
 
 
 class DiagnosticCentre(Base):
@@ -47,9 +53,10 @@ class DiagnosticCentre(Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    centre_tests: Mapped[list["CentreTest"]] = relationship(  # noqa: F821
+    centre_tests: Mapped[list["CentreTest"]] = relationship(
         "CentreTest", back_populates="centre", cascade="all, delete-orphan"
     )
-    slots: Mapped[list["AppointmentSlot"]] = relationship(  # noqa: F821
+    slots: Mapped[list["AppointmentSlot"]] = relationship(
         "AppointmentSlot", back_populates="centre", cascade="all, delete-orphan"
     )
+
