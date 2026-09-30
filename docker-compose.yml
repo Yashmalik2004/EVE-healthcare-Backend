@@ -1,0 +1,64 @@
+services:
+
+  # ── PostgreSQL database ──────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eve_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eve_password}
+      POSTGRES_DB: ${POSTGRES_DB:-eve_healthcare}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eve_user} -d ${POSTGRES_DB:-eve_healthcare}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── FastAPI application ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-EVE Healthcare Diagnostic Service}
+      APP_ENV: ${APP_ENV:-production}
+      DEBUG: ${DEBUG:-false}
+      API_V1_STR: ${API_V1_STR:-/api/v1}
+      SECRET_KEY: ${SECRET_KEY:-change_this_in_production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-eve_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eve_password}
+      POSTGRES_DB: ${POSTGRES_DB:-eve_healthcare}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eve_user}:${POSTGRES_PASSWORD:-eve_password}@db:5432/${POSTGRES_DB:-eve_healthcare}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    # Run Alembic migrations first, then start Uvicorn
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  postgres_data:
+    driver: local
