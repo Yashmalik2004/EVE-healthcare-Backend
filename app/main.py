@@ -30,7 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import auth, bookings, centres, health, tests
+from app.api.routes import auth, bookings, centres, health, payments, tests
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import logger
@@ -58,13 +58,10 @@ tags_metadata = [
         "name": "Bookings",
         "description": "Diagnostic booking lifecycle, slot reservation, and state machine.",
     },
-    # Future phases will extend this list:
-    # {"name": "Authentication", ...},
-    # {"name": "Diagnostic Centres", ...},
-    # {"name": "Diagnostic Tests", ...},
-    # {"name": "Bookings", ...},
-    # {"name": "Payments", ...},
-    # {"name": "Webhooks", ...},
+    {
+        "name": "Payments",
+        "description": "Simulated payment processing with idempotency key support and booking status transitions.",
+    },
 ]
 
 # ── Application ───────────────────────────────────────────────────────────────
@@ -183,8 +180,7 @@ app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(centres.router, prefix=settings.API_V1_STR)
 app.include_router(tests.router, prefix=settings.API_V1_STR)
 app.include_router(bookings.router, prefix=settings.API_V1_STR)
-# Future phases will add:
-# app.include_router(payments.router, prefix=settings.API_V1_STR)
+app.include_router(payments.router, prefix=settings.API_V1_STR)
 
 
 # ── Root overview ─────────────────────────────────────────────────────────────
