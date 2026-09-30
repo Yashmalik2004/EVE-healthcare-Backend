@@ -228,11 +228,11 @@ class BookingService:
             )
             raise ForbiddenException("You are not authorized to cancel this booking.")
 
-        # Disallow cancellation of FAILED bookings explicitly
-        if booking.status == BookingStatus.FAILED:
+        # Disallow cancellation of already CANCELLED or FAILED bookings explicitly
+        if booking.status in (BookingStatus.CANCELLED, BookingStatus.FAILED):
             raise ConflictException(
                 "INVALID_STATE_TRANSITION",
-                "Cannot cancel a booking that is already in FAILED status.",
+                f"Cannot cancel a booking that is already in {booking.status.value} status.",
             )
 
         self.transition_status(db, booking, BookingStatus.CANCELLED)
