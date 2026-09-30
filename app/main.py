@@ -30,7 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import auth, centres, health, tests
+from app.api.routes import auth, bookings, centres, health, tests
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import logger
@@ -53,6 +53,10 @@ tags_metadata = [
     {
         "name": "Diagnostic Tests",
         "description": "Diagnostic tests catalogue definition and lookup.",
+    },
+    {
+        "name": "Bookings",
+        "description": "Diagnostic booking lifecycle, slot reservation, and state machine.",
     },
     # Future phases will extend this list:
     # {"name": "Authentication", ...},
@@ -178,8 +182,9 @@ app.include_router(health.router)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(centres.router, prefix=settings.API_V1_STR)
 app.include_router(tests.router, prefix=settings.API_V1_STR)
+app.include_router(bookings.router, prefix=settings.API_V1_STR)
 # Future phases will add:
-# app.include_router(bookings.router, prefix=settings.API_V1_STR)
+# app.include_router(payments.router, prefix=settings.API_V1_STR)
 
 
 # ── Root overview ─────────────────────────────────────────────────────────────
