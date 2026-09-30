@@ -182,3 +182,24 @@ class BookingAlreadyCancelledException(ConflictException):
 class WebhookAlreadyProcessedException(ConflictException):
     def __init__(self, message: str = "Webhook event has already been processed."):
         super().__init__(code="WEBHOOK_ALREADY_PROCESSED", message=message)
+
+
+class RateLimitExceededException(AppException):
+    """Raised when an API request exceeds the rate limit."""
+
+    def __init__(
+        self,
+        message: str = "Too many requests. Please try again later.",
+        retry_after: int | None = None,
+        headers: dict[str, str] | None = None,
+    ):
+        h = dict(headers or {})
+        if retry_after is not None:
+            h["Retry-After"] = str(retry_after)
+        super().__init__(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            code="RATE_LIMIT_EXCEEDED",
+            message=message,
+            headers=h,
+        )
+

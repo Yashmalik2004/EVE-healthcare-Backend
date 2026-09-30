@@ -1,0 +1,2 @@
+# EVE Healthcare Backend Development Dependencies
+-e .[dev]

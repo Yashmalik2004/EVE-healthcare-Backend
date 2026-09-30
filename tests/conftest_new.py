@@ -44,29 +44,15 @@ def setup_test_db():
     Base.metadata.drop_all(bind=engine_test)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def db():
-    """Yield a transactional session rolled back after each test.
-
-    autouse=True ensures get_db is overridden in FastAPI DI for every test,
-    including those that create their own TestClient via _create_test_client()
-    rather than using the client fixture below.
-    """
+    """Yield a transactional session that is rolled back after each test."""
     connection = engine_test.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
 
-    def _override_get_db():
-        try:
-            yield session
-        finally:
-            pass
-
-    app.dependency_overrides[get_db] = _override_get_db
-
     yield session
 
-    app.dependency_overrides.pop(get_db, None)
     session.close()
     transaction.rollback()
     connection.close()
@@ -84,6 +70,16 @@ def test_rate_limiter():
 
 @pytest.fixture
 def client(db):
+
     """Yield a FastAPI TestClient using the in-memory test database session."""
+
+    def override_get_db():
+        try:
+            yield db
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
         yield test_client
+    app.dependency_overrides.clear()

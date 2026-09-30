@@ -1,0 +1,4 @@
+# EVE Healthcare Backend Dependencies
+# To install in development/editable mode: pip install -e ".[dev]"
+
+-e .

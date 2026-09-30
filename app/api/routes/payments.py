@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Header, Path, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
+from app.core.rate_limit import rate_limit_user
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.payment import PaymentCreate, PaymentResponse
@@ -24,7 +25,9 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
     "",
     response_model=PaymentResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_user(requests=10, window=60, scope="payments:create"))],
     summary="Process a simulated payment",
+
     description=(
         "Processes a simulated payment for a PENDING booking. "
         "Provide an optional `Idempotency-Key` header to safely retry "
@@ -62,7 +65,9 @@ def create_payment(
     "/{payment_id}",
     response_model=PaymentResponse,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit_user(requests=60, window=60, scope="api:general"))],
     summary="Retrieve a payment record",
+
     description="Fetches a payment record by ID. Only the booking owner or an admin may view it.",
 )
 def get_payment(

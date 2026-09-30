@@ -19,6 +19,18 @@ services:
       retries: 10
       start_period: 10s
 
+  # ── Redis cache / rate limiter ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ── FastAPI application ──────────────────────────────────────────────────────
   api:
     build:
@@ -28,6 +40,8 @@ services:
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       APP_NAME: ${APP_NAME:-EVE Healthcare Diagnostic Service}
@@ -42,8 +56,14 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-eve_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eve_password}
       POSTGRES_DB: ${POSTGRES_DB:-eve_healthcare}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-eve_user}:${POSTGRES_PASSWORD:-eve_password}@db:5432/${POSTGRES_DB:-eve_healthcare}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-eve_user}:${POSTGRES_PASSWORD:-eve_password}@db:5432/${POSTGRES_DB:-eve_healthcare}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_ENABLED: "true"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
     ports:
       - "8000:8000"
     # Run Alembic migrations first, then start Uvicorn

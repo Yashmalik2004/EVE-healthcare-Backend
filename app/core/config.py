@@ -37,6 +37,28 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Redis & Rate Limiting
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str | None = None
+    REDIS_URL: str | None = None
+    RATE_LIMIT_ENABLED: bool = True
+
+    @computed_field
+    def EFFECTIVE_REDIS_URL(self) -> str:
+        """Return the effective Redis connection URL.
+
+        Priority:
+        1. Explicit REDIS_URL (used in Docker / production)
+        2. Assembled from REDIS_HOST, REDIS_PORT, REDIS_DB (local dev)
+        """
+        if self.REDIS_URL:
+            return self.REDIS_URL
+        auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
+        return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+
     @computed_field
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """Return the effective database URI.
@@ -46,9 +68,14 @@ class Settings(BaseSettings):
         2. Assembled from individual POSTGRES_* vars (local dev)
         """
         if self.DATABASE_URL:
-            return self.DATABASE_URL
+            url = self.DATABASE_URL
+            if url.startswith("postgres://"):
+                return url.replace("postgres://", "postgresql+psycopg2://", 1)
+            if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            return url
         return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
+            f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
             f"{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 

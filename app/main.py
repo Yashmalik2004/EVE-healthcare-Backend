@@ -215,13 +215,35 @@ async def access_log_middleware(request: Request, call_next):
     duration_ms = round((time.perf_counter() - start_time) * 1000, 1)
 
     logger.info(
-        f"{request.method} {request.url.path} → {response.status_code} "
+        f"{request.method} {request.url.path} -> {response.status_code} "
         f"({duration_ms}ms)"
     )
     return response
 
 
-# ── Exception Handlers ────────────────────────────────────────────────────────
+@app.middleware("http")
+async def rate_limit_headers_middleware(request: Request, call_next):
+    """Propagate X-RateLimit-* headers to ALL responses, including error responses.
+
+    FastAPI dependency-injected Response headers are discarded when an exception
+    handler creates a fresh JSONResponse (e.g. for a 401 or 422).  The rate
+    limiting dependencies store their computed values in ``request.state.rate_limit``
+    so this middleware can attach them to the actual outgoing response regardless
+    of whether the route succeeded or raised an exception.
+
+    ``setdefault`` is used so that headers already written by the
+    RateLimitExceededException handler (the 429 case) are never overwritten.
+    """
+    response = await call_next(request)
+    rl = getattr(request.state, "rate_limit", None)
+    if rl is not None:
+        response.headers.setdefault("X-RateLimit-Limit", str(rl["limit"]))
+        response.headers.setdefault("X-RateLimit-Remaining", str(rl["remaining"]))
+        response.headers.setdefault("X-RateLimit-Reset", str(rl["reset"]))
+    return response
+
+
+
 
 
 @app.exception_handler(AppException)

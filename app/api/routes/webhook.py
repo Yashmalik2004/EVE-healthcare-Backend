@@ -16,6 +16,7 @@ main.py, avoiding an extra router import.
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import rate_limit_ip
 from app.db.database import get_db
 from app.schemas.webhook import WebhookEventCreate, WebhookEventResponse
 from app.services.webhook_service import webhook_service
@@ -27,7 +28,9 @@ router = APIRouter(prefix="/payments/webhook", tags=["Payments"])
     "",
     response_model=WebhookEventResponse,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit_ip(requests=30, window=60, scope="payments:webhook"))],
     summary="Receive a payment gateway webhook",
+
     description=(
         "Handles inbound payment gateway webhook notifications. "
         "No authentication required — this represents an external provider callback. "

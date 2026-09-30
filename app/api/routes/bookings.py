@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
+from app.core.rate_limit import rate_limit_user
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.booking import (
@@ -15,7 +16,12 @@ from app.schemas.booking import (
 )
 from app.services.booking_service import booking_service
 
-router = APIRouter(prefix="/bookings", tags=["Bookings"])
+router = APIRouter(
+    prefix="/bookings",
+    tags=["Bookings"],
+    dependencies=[Depends(rate_limit_user(requests=60, window=60, scope="api:general"))],
+)
+
 
 
 @router.post(
