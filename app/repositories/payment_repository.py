@@ -26,6 +26,19 @@ class PaymentRepository:
         )
 
     @staticmethod
+    def get_by_reference(db: Session, payment_reference: str) -> Payment | None:
+        """Fetch payment by its human-readable reference string (e.g. PAY-20260930-AB12CD34).
+
+        The booking relation is eagerly loaded so the webhook service can immediately
+        inspect and transition the booking state without a second query.
+        """
+        return db.scalar(
+            select(Payment)
+            .where(Payment.payment_reference == payment_reference)
+            .options(selectinload(Payment.booking))
+        )
+
+    @staticmethod
     def get_by_idempotency_key(db: Session, idempotency_key: str) -> Payment | None:
         """Return an existing payment that was created with the given idempotency key.
 

@@ -30,7 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import auth, bookings, centres, health, payments, tests
+from app.api.routes import auth, bookings, centres, health, payments, tests, webhook
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import logger
@@ -181,6 +181,7 @@ app.include_router(centres.router, prefix=settings.API_V1_STR)
 app.include_router(tests.router, prefix=settings.API_V1_STR)
 app.include_router(bookings.router, prefix=settings.API_V1_STR)
 app.include_router(payments.router, prefix=settings.API_V1_STR)
+app.include_router(webhook.router, prefix=settings.API_V1_STR)
 
 
 # ── Root overview ─────────────────────────────────────────────────────────────
