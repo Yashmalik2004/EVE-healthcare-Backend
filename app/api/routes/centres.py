@@ -10,7 +10,9 @@ from app.db.database import get_db
 from app.models.user import User
 from app.schemas.centre import CentreCreate, CentreResponse, CentreUpdate
 from app.schemas.centre_test import CentreTestCreate, CentreTestResponse
+from app.schemas.slot import SlotCreate, SlotResponse
 from app.services.centre_service import centre_service
+from app.services.slot_service import slot_service
 
 router = APIRouter(prefix="/centres", tags=["Diagnostic Centres"])
 
@@ -120,3 +122,43 @@ def add_centre_test(
     """Protected endpoint to add a test and its price to a centre."""
     centre_test = centre_service.add_test_to_centre(db, centre_id, centre_test_in)
     return CentreTestResponse.model_validate(centre_test)
+
+
+@router.get(
+    "/{centre_id}/slots",
+    response_model=list[SlotResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List appointment slots for centre",
+    description="Retrieve available or all appointment slots for a centre with optional pagination.",
+)
+def list_centre_slots(
+    centre_id: int = Path(..., ge=1, description="Diagnostic centre ID"),
+    is_available: bool | None = Query(default=None, description="Filter by slot availability"),
+    skip: int = Query(default=0, ge=0, description="Number of items to skip"),
+    limit: int = Query(default=100, ge=1, le=100, description="Maximum number of items to return"),
+    db: Session = Depends(get_db),
+) -> Sequence[SlotResponse]:
+    """Public endpoint to list appointment slots for a diagnostic centre."""
+    slots = slot_service.list_slots(
+        db, centre_id=centre_id, is_available=is_available, skip=skip, limit=limit
+    )
+    return [SlotResponse.model_validate(s) for s in slots]
+
+
+@router.post(
+    "/{centre_id}/slots",
+    response_model=SlotResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create appointment slot at centre",
+    description="Creates a new future appointment slot for a centre. Requires authentication.",
+)
+def create_slot(
+    centre_id: int = Path(..., ge=1, description="Diagnostic centre ID"),
+    slot_in: SlotCreate = ...,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SlotResponse:
+    """Protected endpoint to create an appointment slot."""
+    slot = slot_service.create_slot(db, centre_id, slot_in)
+    return SlotResponse.model_validate(slot)
+
