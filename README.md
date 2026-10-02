@@ -698,7 +698,7 @@ Make sure Docker Desktop is running.
 ### Step 1 — Clone the repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Yashmalik2004/EVE-healthcare-Backend.git
 cd eve-healthcare-backend
 ```
 
@@ -855,7 +855,7 @@ Docker is recommended, but the application can also be run directly.
 ### Step 1 — Clone
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Yashmalik2004/EVE-healthcare-Backend.git
 cd eve-healthcare-backend
 ```
 
@@ -1028,9 +1028,9 @@ POST /api/v1/auth/signup
 
 ```json
 {
-  "email": "patient@example.com",
-  "password": "Test@12345",
-  "full_name": "Test User"
+  "email": "yash@gmail.com",
+  "password": "12345678",
+  "full_name": "Yash Malik"
 }
 ```
 
@@ -1040,7 +1040,7 @@ POST /api/v1/auth/signup
 POST /api/v1/auth/login
 ```
 
-Use the returned JWT with Swagger's **Authorize** button.
+Use the returned JWT with Swagger's **Authorize** button. ( in 2nd field -> BearerAuth  (http, Bearer) )
 
 ### 3. Create a centre
 
