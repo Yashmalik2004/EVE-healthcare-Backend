@@ -1,5 +1,5 @@
-# EVE Healthcare - By Yash Malik
-# Diagnostic Booking & Payment Backend
+# EVE Healthcare 
+# Diagnostic Booking & Payment Backend - By Yash Malik
 
 A production-oriented REST API for diagnostic test booking, simulated payments, idempotent payment webhooks, authentication, rate limiting, and appointment-slot management.
 
